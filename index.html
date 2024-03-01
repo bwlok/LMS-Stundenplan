@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stundenplan</title>
+
+    <style data-tippy-stylesheet="">.tippy-tooltip[data-animation=fade][data-state=hidden] {
+        opacity: 0
+    }
+
+    .tippy-iOS {
+        cursor: pointer !important;
+        -webkit-tap-highlight-color: transparent
+    }
+
+    .tippy-popper {
+        pointer-events: none;
+        max-width: calc(100vw - 10px);
+        transition-timing-function: cubic-bezier(.165, .84, .44, 1);
+        transition-property: transform
+    }
+
+    .tippy-tooltip {
+        position: relative;
+        color: #fff;
+        border-radius: 4px;
+        font-size: 14px;
+        line-height: 1.4;
+        background-color: #333;
+        transition-property: visibility, opacity, transform;
+        outline: 0
+    }
+
+    .tippy-tooltip[data-placement^=top] > .tippy-arrow {
+        border-width: 8px 8px 0;
+        border-top-color: #333;
+        margin: 0 3px;
+        transform-origin: 50% 0;
+        bottom: -7px
+    }
+
+    .tippy-tooltip[data-placement^=bottom] > .tippy-arrow {
+        border-width: 0 8px 8px;
+        border-bottom-color: #333;
+        margin: 0 3px;
+        transform-origin: 50% 7px;
+        top: -7px
+    }
+
+    .tippy-tooltip[data-placement^=left] > .tippy-arrow {
+        border-width: 8px 0 8px 8px;
+        border-left-color: #333;
+        margin: 3px 0;
+        transform-origin: 0 50%;
+        right: -7px
+    }
+
+    .tippy-tooltip[data-placement^=right] > .tippy-arrow {
+        border-width: 8px 8px 8px 0;
+        border-right-color: #333;
+        margin: 3px 0;
+        transform-origin: 7px 50%;
+        left: -7px
+    }
+
+    .tippy-tooltip[data-interactive][data-state=visible] {
+        pointer-events: auto
+    }
+
+    .tippy-tooltip[data-inertia][data-state=visible] {
+        transition-timing-function: cubic-bezier(.54, 1.5, .38, 1.11)
+    }
+
+    .tippy-arrow {
+        position: absolute;
+        border-color: transparent;
+        border-style: solid
+    }
+
+    .tippy-content {
+        padding: 5px 9px
+    }</style>
+    <link rel="stylesheet" href="css/core-main.min.css">
+
+    <script src="js/stundenplan.js"></script>
+    <script src="js/core-main.min.js"></script>
+    <script src="js/daygrid-main.min.js"></script>
+    <script src="js/timegrid-main.min.js"></script>
+    <script src="js/core-locales-de.js"></script>
+    <script src="js/interaction-main.min.js"></script>
+    <script src="js/jquery-3.0.0.min.js"></script>
+
+
+    <link rel="stylesheet" href="css/daygrid-main.min.css">
+    <link rel="stylesheet" href="css/timegrid-main.min.css">
+    <link rel="stylesheet" href="css/tippy-animations-scale-5.5.1.css">
+
+    <style>
+        body {
+            font-family: Arial;
+            background-repeat: no-repeat;
+            background-size: 250px;
+            background-position: 8pt 4pt;
+            background-color: #070F2B;
+        }
+
+        .teacherAbsence {
+            background-color: lightgreen;
+            border-color: lightgreen;
+            border-width: 4px;
+        }
+
+        .classAbsence {
+            background-color: darkgreen;
+            border-color: darkgreen;
+            border-width: 4px;
+        }
+
+        .faelltaus {
+            background-color: #FF9130;
+        }
+
+        .raumfehlt {
+            background-color: rgb(155, 86, 7);
+        }
+
+        .aenderung2 {
+            background-color: rgb(255, 136, 0);
+        }
+
+        .zusatzunterricht,
+        .zusatzunterricht:hover {
+            color: red;
+            background-color: yellow;
+        }
+
+        .aenderung4 {
+            background-color: #E9B824;
+        }
+
+        .aenderung5 {
+            background-color: rgb(0, 255, 234);
+        }
+
+        .lehrerfehlt {
+            background-color: rgb(0, 183, 255);
+        }
+
+        .aenderung7 {
+            background-color: rgb(247, 0, 255);
+        }
+
+        .klassefehlt {
+            background-color: #004225;
+        }
+
+        .cancelled {
+            background-color: #FF004D !important;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            text-align: center;
+            margin: 12px;
+            color: #4fc3f7;
+        }
+
+        .fc-time-grid .fc-event {
+            overflow: auto;
+        }
+
+        .eventtitel {
+            font-weight: bold;
+        }
+
+        .eventtitel span::after {
+            content: " ";
+        }
+
+        .fc-day-grid .fc-day-grid-event {
+            background-color: #ff8400;
+            border-color: #ff8400;
+        }
+
+        .fc-event {
+            font-size: .8em;
+        }
+
+        #liste-fuer-heute div span {
+            display: inline-block;
+        }
+
+        #liste-fuer-heute div span:nth-child(1) {
+            width: 75px;
+        }
+
+        #liste-fuer-heute div span:nth-child(2),
+        #liste-fuer-heute div span:nth-child(3) {
+            width: 50px;
+        }
+    </style>
+</head>
+<body onload="init()">
+
+<h2>Inoffizieller Stundenplan</h2>
+<h5 style="color:#eb0c4f">Beta - Keine Klausur für 12,13; Keine Lehrer/Assistenten</h5>
+<div id="bittewarten" style="display: none; color:#eb0c4f">Bitte warten</div>
+    <select id="classSelect">
+        <option value="class">Klasse (ohne 12/12)</option>
+        <option value="student">Schüler (12/13)</option>
+        <option value="teacher">Lehrer</option>
+        <option value="room">Raum</option>
+    </select>
+
+    <select id="studentSelect">
+        <option value="choose">Bitte wählen</option>
+    </select>
+
+
+    <span id="lastmodified" style="float: right; color: #4fc3f7"></span>
+
+
+<!--Schüler select and Stunden/Vertretungsselect-->
+<div id="calendar"></div>
+
+<div id="templates" style="display: none">
+    <div id="termintemplate">
+        <div class="eventtitel"><span class="titel"></span><span class="klassen"></span><span class="lehrer"></span></div>
+        <div class="raeume"></div>
+        <div class="periode"></div>
+        <div class="bemerkungen"></div>
+    </div>
+    <template id="aenderungtemplate">
+        <div class="aenderungen">
+            <div class="grund"></div>
+            <div class="caption"></div>
+            <div class="information"></div>
+            <div class="message"></div>
+        </div>
+    </template>
+</div>
+
+</body>
+
+
+
+</html>
